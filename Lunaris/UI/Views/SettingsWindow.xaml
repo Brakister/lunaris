@@ -1,0 +1,196 @@
+<Window x:Class="Lunaris.UI.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configurações — Lunaris"
+        Width="760" Height="580"
+        MinWidth="640" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource PrimaryTextBrush}"
+        FontFamily="Segoe UI" FontSize="13"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl Background="Transparent" BorderBrush="{DynamicResource BorderBrush}">
+            <TabItem Header="Geral">
+                <StackPanel Margin="16,12">
+                    <CheckBox Content="Iniciar com o Windows" IsChecked="{Binding StartWithWindows}"/>
+                    <CheckBox Content="Manter na System Tray" IsChecked="{Binding ShowInTray}" Margin="0,10,0,0"/>
+                    <CheckBox Content="Abrir no monitor ativo" IsChecked="{Binding OpenOnActiveMonitor}" Margin="0,10,0,0"/>
+                    <CheckBox Content="Fechar ao executar" IsChecked="{Binding CloseOnExecute}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Atalho">
+                <StackPanel Margin="16,12">
+                    <TextBlock Text="Hotkey global" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Text="Funciona mesmo quando o Lunaris não está em foco." Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,16"/>
+
+                    <TextBlock Text="Modificador:" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,16">
+                        <RadioButton Content="CTRL+ALT" GroupName="Mod" IsChecked="{Binding HotkeyModifiers, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Ctrl+Alt}"/>
+                        <RadioButton Content="CTRL" GroupName="Mod" IsChecked="{Binding HotkeyModifiers, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Ctrl}" Margin="16,0,0,0"/>
+                        <RadioButton Content="ALT" GroupName="Mod" IsChecked="{Binding HotkeyModifiers, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Alt}" Margin="16,0,0,0"/>
+                        <RadioButton Content="SHIFT" GroupName="Mod" IsChecked="{Binding HotkeyModifiers, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Shift}" Margin="16,0,0,0"/>
+                        <RadioButton Content="WIN" GroupName="Mod" IsChecked="{Binding HotkeyModifiers, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Win}" Margin="16,0,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Tecla:" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <TextBox x:Name="KeyCaptureBox"
+                             Margin="0,6,0,0" Width="220" HorizontalAlignment="Left"
+                             IsReadOnly="True" Cursor="Hand"
+                             PreviewKeyDown="OnKeyCaptureKeyDown"
+                             Text="{Binding HotkeyKey, Mode=OneWay}"
+                             ToolTip="Clique e pressione a tecla desejada"/>
+
+                    <TextBlock Text="{Binding DisplayHotkey, StringFormat=Combinação atual: {0}}" Margin="0,12,0,0"
+                               Foreground="{DynamicResource SecondaryTextBrush}"/>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Aparência">
+                <StackPanel Margin="16,12">
+                    <TextBlock Text="Tema" FontWeight="SemiBold" FontSize="14"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,20">
+                        <RadioButton Content="Sistema" GroupName="Theme" IsChecked="{Binding ThemeName, Converter={StaticResource StringEqualsToBool}, ConverterParameter=System}"/>
+                        <RadioButton Content="Claro" GroupName="Theme" IsChecked="{Binding ThemeName, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Light}" Margin="16,0,0,0"/>
+                        <RadioButton Content="Escuro" GroupName="Theme" IsChecked="{Binding ThemeName, Converter={StaticResource StringEqualsToBool}, ConverterParameter=Dark}" Margin="16,0,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Tamanho da fonte" FontWeight="SemiBold" FontSize="14"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <RadioButton Content="12" GroupName="Font" IsChecked="{Binding FontSize, Converter={StaticResource DoubleEqualsToBool}, ConverterParameter=12}"/>
+                        <RadioButton Content="14" GroupName="Font" IsChecked="{Binding FontSize, Converter={StaticResource DoubleEqualsToBool}, ConverterParameter=14}" Margin="16,0,0,0"/>
+                        <RadioButton Content="16" GroupName="Font" IsChecked="{Binding FontSize, Converter={StaticResource DoubleEqualsToBool}, ConverterParameter=16}" Margin="16,0,0,0"/>
+                        <RadioButton Content="18" GroupName="Font" IsChecked="{Binding FontSize, Converter={StaticResource DoubleEqualsToBool}, ConverterParameter=18}" Margin="16,0,0,0"/>
+                        <RadioButton Content="20" GroupName="Font" IsChecked="{Binding FontSize, Converter={StaticResource DoubleEqualsToBool}, ConverterParameter=20}" Margin="16,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Pesquisa">
+                <StackPanel Margin="16,12">
+                    <TextBlock Text="Provedores de pesquisa" FontWeight="SemiBold" FontSize="14"/>
+                    <StackPanel Margin="0,8,0,0">
+                        <CheckBox Content="Aplicativos" IsChecked="{Binding EnableApplications}"/>
+                        <CheckBox Content="Arquivos" IsChecked="{Binding EnableFiles}" Margin="0,8,0,0"/>
+                        <CheckBox Content="Configurações do Windows" IsChecked="{Binding EnableSettings}" Margin="0,8,0,0"/>
+                        <CheckBox Content="Histórico" IsChecked="{Binding EnableHistory}" Margin="0,8,0,0"/>
+                        <CheckBox Content="Clipboard" IsChecked="{Binding EnableClipboard}" Margin="0,8,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Pastas adicionais para indexar arquivos" FontWeight="SemiBold" FontSize="14" Margin="0,20,0,8"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding NewDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Caminho completo da pasta, ex.: C:\Projetos"/>
+                        <Button Grid.Column="1" Content="Adicionar" Margin="8,0,0,0"
+                                Click="OnAddDirectoryClick"/>
+                    </Grid>
+
+                    <ListBox Margin="0,8,0,0" MaxHeight="160"
+                             Style="{StaticResource SettingsListStyle}"
+                             ItemsSource="{Binding AdditionalDirectories}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <Button Content="Remover" DockPanel.Dock="Right"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            Click="OnRemoveDirectoryClick"
+                                            Tag="{Binding}"/>
+                                    <TextBlock Text="{Binding}" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Comandos">
+                <Grid Margin="16,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="280"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Comandos personalizados" FontWeight="SemiBold" FontSize="14"/>
+                        <ListBox Grid.Row="1" Margin="0,8,0,0" MaxHeight="360"
+                                 Style="{StaticResource SettingsListStyle}"
+                                 ItemContainerStyle="{StaticResource SettingsListRowStyle}"
+                                 ItemsSource="{Binding Commands}"
+                                 SelectedItem="{Binding SelectedCommand}"
+                                 SelectionChanged="OnCommandSelectionChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                        <TextBlock Text="{Binding Executable}" FontSize="12"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Editar" FontWeight="SemiBold" FontSize="14"/>
+                        <TextBlock Text="Nome" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CommandName, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Alias" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CommandAlias, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Executável" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CommandExecutable, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Argumentos" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding CommandArguments, UpdateSourceTrigger=PropertyChanged}"/>
+                        <CheckBox Content="Executar como administrador" IsChecked="{Binding CommandRunAsAdmin}" Margin="0,10,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                            <Button Content="Salvar" Style="{StaticResource PrimaryButtonStyle}" Click="OnSaveCommandClick"/>
+                            <Button Content="Excluir" Margin="8,0,0,0" Click="OnDeleteCommandClick"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Privacidade">
+                <StackPanel Margin="16,12">
+                    <TextBlock Text="Privacidade" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Text="Tudo é armazenado localmente. Nada sai do seu computador."
+                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,16"/>
+
+                    <CheckBox Content="Armazenar histórico de execução" IsChecked="{Binding StoreHistory}"/>
+                    <CheckBox Content="Armazenar histórico do clipboard" IsChecked="{Binding StoreClipboard}" Margin="0,10,0,0"/>
+                    <TextBlock Text="O histórico do clipboard é desativado por padrão. Textos copiados só são guardados quando habilitado."
+                               FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"
+                               TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+                        <Button Content="Limpar histórico" Click="OnClearHistoryClick"/>
+                        <Button Content="Limpar clipboard" Margin="8,0,0,0" Click="OnClearClipboardClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock Grid.Row="1" Text="Lunaris Launcher 1.0.0 — local, rápido e privado"
+                   Margin="0,12,0,0" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+    </Grid>
+</Window>
