@@ -100,6 +100,20 @@ public class FuzzyMatcherTests
         Assert.Equal(0, FuzzyMatcher.ScoreNormalized(FuzzyMatcher.Prepare("cafe"), ""));
     }
 
+    [Theory]
+    [InlineData("cmd", "Prompt de Comando cmd command prompt")]
+    [InlineData("mstsc", "Conexão de Área de Trabalho Remota mstsc remote desktop")]
+    [InlineData("remote", "Conexão de Área de Trabalho Remota mstsc remote desktop")]
+    [InlineData("remote desktop", "Conexão de Área de Trabalho Remota mstsc remote desktop")]
+    [InlineData("powershell", "Windows PowerShell pwsh powershell")]
+    public void Search_text_with_aliases_matches(string query, string searchText)
+    {
+        var prepared = FuzzyMatcher.Prepare(query);
+        var normalized = StringNormalizer.Normalize(searchText);
+        Assert.True(FuzzyMatcher.ScoreNormalized(prepared, normalized) > 0.2,
+            $"{query} should match search text '{searchText}'");
+    }
+
     [Fact]
     public void StringNormalizer_is_thread_safe()
     {

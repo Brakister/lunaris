@@ -15,7 +15,7 @@ public sealed class AppIndexRepository
 
         using var connection = _factory.CreateConnection();
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name, Path, Category, Arguments, Icon FROM Applications;";
+        cmd.CommandText = "SELECT Id, Name, Path, Category, Arguments, Icon, SearchText FROM Applications;";
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -28,6 +28,7 @@ public sealed class AppIndexRepository
                 Category = reader.GetString(3),
                 Arguments = reader.GetString(4),
                 Icon = reader.GetString(5),
+                SearchText = reader.GetString(6),
             });
         }
 
@@ -51,8 +52,8 @@ public sealed class AppIndexRepository
             using var cmd = connection.CreateCommand();
             cmd.Transaction = transaction;
             cmd.CommandText = """
-                INSERT INTO Applications (Id, Name, Path, Category, Arguments, Icon, UpdatedAt)
-                VALUES ($id, $name, $path, $cat, $args, $icon, $at);
+                INSERT INTO Applications (Id, Name, Path, Category, Arguments, Icon, SearchText, UpdatedAt)
+                VALUES ($id, $name, $path, $cat, $args, $icon, $searchText, $at);
                 """;
             var id = cmd.Parameters.Add("$id", SqliteType.Text);
             var name = cmd.Parameters.Add("$name", SqliteType.Text);
@@ -60,6 +61,7 @@ public sealed class AppIndexRepository
             var cat = cmd.Parameters.Add("$cat", SqliteType.Text);
             var args = cmd.Parameters.Add("$args", SqliteType.Text);
             var icon = cmd.Parameters.Add("$icon", SqliteType.Text);
+            var searchText = cmd.Parameters.Add("$searchText", SqliteType.Text);
             var at = cmd.Parameters.Add("$at", SqliteType.Text);
 
             foreach (var app in apps)
@@ -70,6 +72,7 @@ public sealed class AppIndexRepository
                 cat.Value = app.Category;
                 args.Value = app.Arguments;
                 icon.Value = app.Icon;
+                searchText.Value = app.SearchText;
                 at.Value = DateTime.UtcNow.ToString("O");
                 cmd.ExecuteNonQuery();
             }
@@ -92,4 +95,7 @@ public sealed class IndexedApplication
     public string Arguments { get; set; } = string.Empty;
 
     public string Icon { get; set; } = string.Empty;
+
+    /// <summary>Extra terms (executable name, aliases) used only for fuzzy matching.</summary>
+    public string SearchText { get; set; } = string.Empty;
 }

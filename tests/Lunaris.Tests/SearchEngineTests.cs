@@ -99,6 +99,44 @@ public class SearchEngineTests
     }
 
     [Fact]
+    public async Task Provider_score_can_surface_calculator_like_results()
+    {
+        var engine = Create(new StubProvider("calculator", _ => new[]
+        {
+            new SearchResult
+            {
+                Id = "calc:2+2",
+                Title = "= 4",
+                Subtitle = "Copiar resultado",
+                Score = 100,
+            },
+        }));
+
+        var results = await engine.SearchAsync("2+2", CancellationToken.None);
+        var single = Assert.Single(results);
+        Assert.Equal("= 4", single.Title);
+    }
+
+    [Fact]
+    public async Task Provider_score_can_surface_command_alias_results()
+    {
+        var engine = Create(new StubProvider("system", _ => new[]
+        {
+            new SearchResult
+            {
+                Id = "sys:cmd",
+                Title = "Prompt de Comando",
+                Subtitle = "cmd",
+                Score = 0.8,
+            },
+        }));
+
+        var results = await engine.SearchAsync("cmd", CancellationToken.None);
+        var single = Assert.Single(results);
+        Assert.Equal("Prompt de Comando", single.Title);
+    }
+
+    [Fact]
     public async Task Very_large_query_is_tolerated()
     {
         var engine = Create(new StubProvider("apps", _ => new[] { Result("a", "Alpha") }));

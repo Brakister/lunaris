@@ -9,6 +9,8 @@ public static partial class NativeMethods
     public const int WM_CLIPBOARDUPDATE = 0x031D;
     public const int WM_CONTEXTMENU = 0x007B;
     public const int WM_LBUTTONUP = 0x0202;
+    public const int WM_RBUTTONUP = 0x0205;
+    public const int WM_LBUTTONDBLCLK = 0x0203;
     public const int WM_COMMAND = 0x0111;
     public const int WM_SETTINGCHANGE = 0x001A;
     public const int WM_NULL = 0x0000;

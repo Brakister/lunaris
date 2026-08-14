@@ -10,25 +10,25 @@ public static class AppIndexer
 {
     private const string AppPathsKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
 
-    private static readonly (string Exe, string Name)[] SystemTools =
+    private static readonly (string Exe, string Name, string Alias)[] SystemTools =
     {
-        ("cmd.exe", "Prompt de Comando"),
-        ("powershell.exe", "Windows PowerShell"),
-        ("pwsh.exe", "PowerShell 7"),
-        ("mstsc.exe", "Conexão de Área de Trabalho Remota"),
-        ("notepad.exe", "Bloco de Notas"),
-        ("taskmgr.exe", "Gerenciador de Tarefas"),
-        ("regedit.exe", "Editor do Registro"),
-        ("msconfig.exe", "Configuração do Sistema"),
-        ("control.exe", "Painel de Controle"),
-        ("winver.exe", "Sobre o Windows"),
-        ("osk.exe", "Teclado Virtual"),
-        ("snippingtool.exe", "Ferramenta de Captura"),
-        ("mspaint.exe", "Paint"),
-        ("charmap.exe", "Mapa de Caracteres"),
-        ("explorer.exe", "Explorador de Arquivos"),
-        ("perfmon.exe", "Monitor de Desempenho"),
-        ("resmon.exe", "Monitor de Recursos"),
+        ("cmd.exe", "Prompt de Comando", "command prompt"),
+        ("powershell.exe", "Windows PowerShell", "pwsh"),
+        ("pwsh.exe", "PowerShell 7", "powershell"),
+        ("mstsc.exe", "Conexão de Área de Trabalho Remota", "remote desktop"),
+        ("notepad.exe", "Bloco de Notas", "notepad"),
+        ("taskmgr.exe", "Gerenciador de Tarefas", "task manager"),
+        ("regedit.exe", "Editor do Registro", "registry editor"),
+        ("msconfig.exe", "Configuração do Sistema", "system configuration"),
+        ("control.exe", "Painel de Controle", "control panel"),
+        ("winver.exe", "Sobre o Windows", "windows version"),
+        ("osk.exe", "Teclado Virtual", "onscreen keyboard"),
+        ("snippingtool.exe", "Ferramenta de Captura", "snipping tool"),
+        ("mspaint.exe", "Paint", "paint"),
+        ("charmap.exe", "Mapa de Caracteres", "character map"),
+        ("explorer.exe", "Explorador de Arquivos", "file explorer"),
+        ("perfmon.exe", "Monitor de Desempenho", "performance monitor"),
+        ("resmon.exe", "Monitor de Recursos", "resource monitor"),
     };
 
     public static IReadOnlyList<IndexedApplication> Discover(CancellationToken cancellationToken)
@@ -48,6 +48,11 @@ public static class AppIndexer
         }
 
         Log.Info("Discovered {Count} applications", apps.Count);
+
+        foreach (var app in apps.Values)
+            if (string.IsNullOrEmpty(app.SearchText))
+                app.SearchText = $"{app.Name} {Path.GetFileNameWithoutExtension(app.Path)}";
+
         return apps.Values.OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
@@ -174,7 +179,7 @@ public static class AppIndexer
         if (string.IsNullOrEmpty(systemDir) || !Directory.Exists(systemDir))
             return;
 
-        foreach (var (exe, name) in SystemTools)
+        foreach (var (exe, name, alias) in SystemTools)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -190,6 +195,7 @@ public static class AppIndexer
                 Path = path,
                 Category = "Sistema",
                 Icon = Lunaris.Core.Utilities.GlyphCatalog.App,
+                SearchText = $"{name} {Path.GetFileNameWithoutExtension(exe)} {alias}",
             });
         }
     }

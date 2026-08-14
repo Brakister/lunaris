@@ -90,6 +90,13 @@ public sealed class SystemProvider : ISearchProvider
                 Subtitle = entry.Hint.StartsWith("ms-settings", StringComparison.Ordinal)
                     ? $"Configurações do Windows · {entry.Hint}"
                     : entry.Hint,
+                SearchText = string.Join(' ', new[]
+                {
+                    entry.Name,
+                    entry.DefaultAlias,
+                    entry.Hint,
+                    string.Join(' ', entry.Keywords),
+                }.Where(s => !string.IsNullOrWhiteSpace(s))),
                 Icon = entry.Icon,
                 Category = entry.Category,
                 Kind = entry.Kind,

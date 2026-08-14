@@ -18,6 +18,7 @@ public sealed class ApplicationSearchProvider : ISearchProvider
 
     private IReadOnlyList<IndexedApplication> _cachedApps = Array.Empty<IndexedApplication>();
     private string[] _normalizedTitles = Array.Empty<string>();
+    private string[] _normalizedSearchText = Array.Empty<string>();
     private string[] _normalizedPaths = Array.Empty<string>();
 
     public string Id => "applications";
@@ -54,6 +55,8 @@ public sealed class ApplicationSearchProvider : ISearchProvider
             var app = apps[i];
             var match = FuzzyMatcher.ScoreNormalized(preparedQuery, _normalizedTitles[i]);
             if (match <= 0.12)
+                match = FuzzyMatcher.ScoreNormalized(preparedQuery, _normalizedSearchText[i]);
+            if (match <= 0.12)
                 match = FuzzyMatcher.ScoreNormalized(preparedQuery, _normalizedPaths[i]);
 
             if (match <= 0.12)
@@ -64,6 +67,7 @@ public sealed class ApplicationSearchProvider : ISearchProvider
                 Id = app.Id,
                 Title = app.Name,
                 Subtitle = string.IsNullOrEmpty(app.Category) ? app.Path : app.Category,
+                SearchText = app.SearchText,
                 Icon = app.Icon,
                 Category = "Aplicativo",
                 Kind = SearchResultKind.App,
@@ -97,6 +101,7 @@ public sealed class ApplicationSearchProvider : ISearchProvider
 
         _cachedApps = apps;
         _normalizedTitles = apps.Select(a => StringNormalizer.Normalize(a.Name)).ToArray();
+        _normalizedSearchText = apps.Select(a => StringNormalizer.Normalize(a.SearchText)).ToArray();
         _normalizedPaths = apps.Select(a => StringNormalizer.Normalize(a.Path)).ToArray();
     }
 }

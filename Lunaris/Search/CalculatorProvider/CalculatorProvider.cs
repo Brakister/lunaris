@@ -36,6 +36,7 @@ public sealed class CalculatorProvider : ISearchProvider
             Id = "calc:" + query.Trim().ToLowerInvariant(),
             Title = "= " + value,
             Subtitle = "Copiar resultado",
+            SearchText = query,
             Icon = GlyphCatalog.Calculator,
             Category = "Calculadora",
             Kind = SearchResultKind.Calculation,

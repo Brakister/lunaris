@@ -51,6 +51,13 @@ public sealed class CommandProvider : ISearchProvider
                 Subtitle = string.IsNullOrEmpty(command.Arguments)
                     ? command.Executable
                     : $"{command.Executable} {command.Arguments}",
+                SearchText = string.Join(' ', new[]
+                {
+                    command.Name,
+                    command.Alias,
+                    command.Executable,
+                    command.Arguments,
+                }.Where(s => !string.IsNullOrWhiteSpace(s))),
                 Icon = Lunaris.Core.Utilities.GlyphCatalog.Command,
                 Category = "Comando",
                 Kind = SearchResultKind.Command,

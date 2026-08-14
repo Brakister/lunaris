@@ -89,6 +89,9 @@ public sealed class MigrationRunner
         (2, """
             ALTER TABLE SearchHistory ADD COLUMN ExecuteHint TEXT;
             """),
+        (3, """
+            ALTER TABLE Applications ADD COLUMN SearchText TEXT NOT NULL DEFAULT '';
+            """),
     };
 
     private readonly DatabaseFactory _factory;

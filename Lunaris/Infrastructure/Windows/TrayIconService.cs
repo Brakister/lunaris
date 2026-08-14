@@ -119,6 +119,11 @@ public sealed class TrayIconService : IDisposable, INotificationService
                 _actions.Open();
                 return true;
 
+            case NativeMethods.WM_LBUTTONDBLCLK:
+                _actions.Open();
+                return true;
+
+            case NativeMethods.WM_RBUTTONUP:
             case NativeMethods.WM_CONTEXTMENU:
                 ShowContextMenu();
                 return true;

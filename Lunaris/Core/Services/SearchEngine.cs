@@ -89,10 +89,14 @@ public sealed class SearchEngine : ISearchEngine
         {
             var match = FuzzyMatcher.ScorePrepared(preparedQuery, result.Title);
             if (match <= 0)
-            {
-                // Fall back to matching the subtitle (e.g. file paths, urls).
                 match = FuzzyMatcher.ScorePrepared(preparedQuery, result.Subtitle);
-            }
+            if (match <= 0 && !string.IsNullOrEmpty(result.SearchText))
+                match = FuzzyMatcher.ScorePrepared(preparedQuery, result.SearchText);
+
+            // Providers can already compute their own relevance. Keep that signal, but
+            // normalize it to the same 0..1 range used by the fuzzy matcher.
+            var providerMatch = Math.Clamp(result.Score, 0.0, 1.0);
+            match = Math.Max(match, providerMatch);
 
             if (match <= 0.12)
                 continue;

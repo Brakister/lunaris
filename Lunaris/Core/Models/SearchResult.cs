@@ -12,6 +12,9 @@ public sealed class SearchResult
 
     public string Subtitle { get; set; } = string.Empty;
 
+    /// <summary>Extra terms (executable names, aliases) used for fuzzy matching across providers.</summary>
+    public string SearchText { get; set; } = string.Empty;
+
     /// <summary>Icon glyph rendered with the UI glyph font.</summary>
     public string Icon { get; set; } = string.Empty;
 
