@@ -11,17 +11,33 @@ public static class FuzzyMatcher
 {
     private static readonly char[] Separators = { ' ', '-', '_', '.', '\\', '/', '(', ')', '[', ']' };
 
+    /// <summary>Pre-normalizes a query once so it is not re-normalized for every candidate.</summary>
+    public static string Prepare(string? query) => StringNormalizer.Normalize(query);
+
     /// <summary>Returns a score in [0, 1]; 0 means no match.</summary>
-    public static double Score(string query, string candidate)
+    public static double Score(string query, string candidate) => ScorePrepared(Prepare(query), candidate);
+
+    /// <summary>Like <see cref="Score"/>, but with the query already normalized via <see cref="Prepare"/>.</summary>
+    public static double ScorePrepared(string normalizedQuery, string candidate)
     {
-        if (string.IsNullOrWhiteSpace(query) || string.IsNullOrWhiteSpace(candidate))
+        if (string.IsNullOrEmpty(normalizedQuery) || string.IsNullOrEmpty(candidate))
             return 0;
 
-        var q = StringNormalizer.Normalize(query);
         var c = StringNormalizer.Normalize(candidate);
-        if (q.Length == 0 || c.Length == 0)
+        return c.Length == 0 ? 0 : ScoreCore(normalizedQuery, c);
+    }
+
+    /// <summary>Like <see cref="ScorePrepared"/>, but the candidate is also already normalized.</summary>
+    public static double ScoreNormalized(string normalizedQuery, string normalizedCandidate)
+    {
+        if (string.IsNullOrEmpty(normalizedQuery) || string.IsNullOrEmpty(normalizedCandidate))
             return 0;
 
+        return ScoreCore(normalizedQuery, normalizedCandidate);
+    }
+
+    private static double ScoreCore(string q, string c)
+    {
         if (c == q)
             return 1.0;
 

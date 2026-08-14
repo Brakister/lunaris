@@ -84,13 +84,14 @@ public sealed class SearchEngine : ISearchEngine
         }
 
         var scored = new List<(SearchResult Result, double Match)>();
+        var preparedQuery = FuzzyMatcher.Prepare(query);
         foreach (var result in dedup.Values)
         {
-            var match = FuzzyMatcher.Score(query, result.Title);
+            var match = FuzzyMatcher.ScorePrepared(preparedQuery, result.Title);
             if (match <= 0)
             {
                 // Fall back to matching the subtitle (e.g. file paths, urls).
-                match = FuzzyMatcher.Score(query, result.Subtitle);
+                match = FuzzyMatcher.ScorePrepared(preparedQuery, result.Subtitle);
             }
 
             if (match <= 0.12)

@@ -1,6 +1,8 @@
 using Lunaris.Core.Interfaces;
 using Lunaris.Core.Models;
 using Lunaris.Core.Services;
+using Lunaris.Core.Utilities;
+using Lunaris.Infrastructure.Database;
 using Lunaris.Infrastructure.Indexing;
 using Lunaris.Infrastructure.Logging;
 
@@ -13,6 +15,10 @@ public sealed class ApplicationSearchProvider : ISearchProvider
     private readonly IActionRunner _runner;
     private readonly IFavoritesService _favorites;
     private readonly ISettingsService _settings;
+
+    private IReadOnlyList<IndexedApplication> _cachedApps = Array.Empty<IndexedApplication>();
+    private string[] _normalizedTitles = Array.Empty<string>();
+    private string[] _normalizedPaths = Array.Empty<string>();
 
     public string Id => "applications";
 
@@ -34,17 +40,21 @@ public sealed class ApplicationSearchProvider : ISearchProvider
         if (string.IsNullOrWhiteSpace(query))
             return Task.FromResult<IEnumerable<SearchResult>>(Array.Empty<SearchResult>());
 
-        var results = new List<SearchResult>();
-        var apps = _index.Applications;
+        EnsureCache();
 
-        foreach (var app in apps)
+        var preparedQuery = FuzzyMatcher.Prepare(query);
+        var results = new List<SearchResult>();
+        var apps = _cachedApps;
+
+        for (var i = 0; i < apps.Count; i++)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromResult<IEnumerable<SearchResult>>(results);
 
-            var match = FuzzyMatcher.Score(query, app.Name);
+            var app = apps[i];
+            var match = FuzzyMatcher.ScoreNormalized(preparedQuery, _normalizedTitles[i]);
             if (match <= 0.12)
-                match = FuzzyMatcher.Score(query, app.Path);
+                match = FuzzyMatcher.ScoreNormalized(preparedQuery, _normalizedPaths[i]);
 
             if (match <= 0.12)
                 continue;
@@ -77,5 +87,16 @@ public sealed class ApplicationSearchProvider : ISearchProvider
         }
 
         return Task.FromResult<IEnumerable<SearchResult>>(results);
+    }
+
+    private void EnsureCache()
+    {
+        var apps = _index.Applications;
+        if (ReferenceEquals(apps, _cachedApps))
+            return;
+
+        _cachedApps = apps;
+        _normalizedTitles = apps.Select(a => StringNormalizer.Normalize(a.Name)).ToArray();
+        _normalizedPaths = apps.Select(a => StringNormalizer.Normalize(a.Path)).ToArray();
     }
 }

@@ -150,7 +150,7 @@ installer/Lunaris.iss        Inno Setup script
 > **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
 > Nunca commite nem crie Release com a versão antiga.
 
-- Versão atual: **1.2.0**
+- Versão atual: **1.3.0**
 
 Onde alterar a versão (todos juntos):
 - `Lunaris/Lunaris.csproj` → `<Version>`
@@ -166,3 +166,10 @@ Depois de alterar a versão: `dotnet build` + `dotnet test`, republish com `scri
 Para o auto-update funcionar: crie uma **Release** no GitHub com a tag `v<versão>` e anexe
 o `artifacts/Lunaris-Setup.exe` como asset. O app detecta versões novas automaticamente
 ou pelo menu do tray → "Verificar atualizações".
+
+### Desempenho
+
+- O índice de arquivos fica em SQLite e é re-scanneado no máximo uma vez a cada 12h
+  (ou via tray → "Reindexar"). Em startups seguintes o app usa o índice persistido.
+- A indexação roda em prioridade baixa, para não disputar CPU com seus apps.
+- CPU ociosa: ~0%. RAM típica: ~70–130 MB em repouso, ~120–200 MB com o launcher aberto.

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using Lunaris.Infrastructure.Database;
 using Lunaris.Infrastructure.Logging;
 
@@ -57,6 +58,7 @@ public sealed class FileIndexer
     {
         var entries = await Task.Run(() =>
         {
+            Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
             var list = new List<FileSystemEntry>();
 
             foreach (var dir in EnumerateDirsSafe(directory, cancellationToken))
@@ -76,14 +78,23 @@ public sealed class FileIndexer
 
             try
             {
-                FileSystemInfo info = entry.IsFolder
-                    ? new DirectoryInfo(entry.Path)
-                    : new FileInfo(entry.Path);
+                var size = 0L;
+                FileSystemInfo info;
+                if (entry.IsFolder)
+                {
+                    info = new DirectoryInfo(entry.Path);
+                }
+                else
+                {
+                    var fileInfo = new FileInfo(entry.Path);
+                    size = fileInfo.Length;
+                    info = fileInfo;
+                }
 
                 batch.Add((entry.Path,
                     info.Name,
                     Path.GetDirectoryName(entry.Path) ?? string.Empty,
-                    entry.IsFolder ? 0 : new FileInfo(entry.Path).Length,
+                    size,
                     info.LastWriteTime,
                     entry.IsFolder));
 

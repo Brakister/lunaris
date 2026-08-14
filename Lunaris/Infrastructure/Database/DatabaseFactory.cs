@@ -49,5 +49,7 @@ public sealed class DatabaseFactory
         cmd.ExecuteNonQuery();
         cmd.CommandText = "PRAGMA foreign_keys=ON;";
         cmd.ExecuteNonQuery();
+        cmd.CommandText = "PRAGMA cache_size=-2048;";
+        cmd.ExecuteNonQuery();
     }
 }

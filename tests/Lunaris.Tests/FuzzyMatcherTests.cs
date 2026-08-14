@@ -87,6 +87,20 @@ public class FuzzyMatcherTests
     }
 
     [Fact]
+    public void Prepared_query_scores_identically()
+    {
+        var query = "configuracao";
+        var candidate = "Configuração do Sistema";
+        var prepared = FuzzyMatcher.Prepare(query);
+
+        var plain = FuzzyMatcher.Score(query, candidate);
+        Assert.Equal(plain, FuzzyMatcher.ScorePrepared(prepared, candidate));
+        Assert.Equal(plain, FuzzyMatcher.ScoreNormalized(prepared, StringNormalizer.Normalize(candidate)));
+        Assert.Equal(0, FuzzyMatcher.ScorePrepared(FuzzyMatcher.Prepare(""), candidate));
+        Assert.Equal(0, FuzzyMatcher.ScoreNormalized(FuzzyMatcher.Prepare("cafe"), ""));
+    }
+
+    [Fact]
     public void StringNormalizer_is_thread_safe()
     {
         var inputs = new[] { "Configuração", "São Paulo", "ação", "canção", "maçã", "coração" };

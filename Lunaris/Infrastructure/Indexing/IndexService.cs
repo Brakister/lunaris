@@ -1,3 +1,6 @@
+using System.IO;
+using System.Text.Json;
+using System.Threading;
 using Lunaris.Core.Interfaces;
 using Lunaris.Core.Models;
 using Lunaris.Core.Utilities;
@@ -8,8 +11,11 @@ namespace Lunaris.Infrastructure.Indexing;
 
 public sealed class IndexService : IIndexService
 {
+    private const string FileIndexStampKey = "fileIndex";
+    private static readonly TimeSpan FreshWindow = TimeSpan.FromHours(12);
+
     private readonly AppIndexRepository _appIndexRepository;
-    private readonly IndexedFileRepository _fileRepository;
+    private readonly SettingsRepository _stampRepository;
     private readonly FileIndexer _fileIndexer;
     private readonly ISettingsService _settings;
 
@@ -19,12 +25,12 @@ public sealed class IndexService : IIndexService
 
     public IndexService(
         AppIndexRepository appIndexRepository,
-        IndexedFileRepository fileRepository,
+        SettingsRepository stampRepository,
         FileIndexer fileIndexer,
         ISettingsService settings)
     {
         _appIndexRepository = appIndexRepository;
-        _fileRepository = fileRepository;
+        _stampRepository = stampRepository;
         _fileIndexer = fileIndexer;
         _settings = settings;
     }
@@ -57,16 +63,19 @@ public sealed class IndexService : IIndexService
             Log.Error(ex, "Failed to load cached application index");
         }
 
-        return Task.Run(() => ReindexCoreAsync(cancellationToken), cancellationToken);
+        return Task.Run(() => ReindexCoreAsync(cancellationToken, force: false), cancellationToken);
     }
 
     public async Task ReindexAsync(CancellationToken cancellationToken)
     {
-        await Task.Run(() => ReindexCoreAsync(cancellationToken), cancellationToken);
+        await Task.Run(() => ReindexCoreAsync(cancellationToken, force: true), cancellationToken);
     }
 
-    private void ReindexCoreAsync(CancellationToken cancellationToken)
+    private void ReindexCoreAsync(CancellationToken cancellationToken, bool force)
     {
+        // Yield CPU to interactive apps while scanning.
+        Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+
         if (IsPaused)
         {
             Log.Info("Indexing skipped: paused");
@@ -102,9 +111,22 @@ public sealed class IndexService : IIndexService
             return;
 
         var roots = ComputeRoots();
+
+        if (!force && IsFileIndexFresh(roots))
+        {
+            Log.Info("File index is up to date; skipping reindex");
+            return;
+        }
+
         try
         {
             _fileIndexer.ReindexAsync(roots, cancellationToken).GetAwaiter().GetResult();
+            _stampRepository.Set(FileIndexStampKey,
+                JsonSerializer.Serialize(new FileIndexStamp
+                {
+                    Utc = DateTime.UtcNow,
+                    RootsHash = RootsHash(roots),
+                }));
         }
         catch (OperationCanceledException)
         {
@@ -116,11 +138,44 @@ public sealed class IndexService : IIndexService
         }
     }
 
+    private bool IsFileIndexFresh(IReadOnlyList<string> roots)
+    {
+        var stamp = _stampRepository.Get(FileIndexStampKey);
+        if (string.IsNullOrEmpty(stamp))
+            return false;
+
+        try
+        {
+            var data = JsonSerializer.Deserialize<FileIndexStamp>(stamp);
+            if (data is null)
+                return false;
+
+            if (!string.Equals(data.RootsHash, RootsHash(roots), StringComparison.Ordinal))
+                return false;
+
+            return DateTime.UtcNow - data.Utc < FreshWindow;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string RootsHash(IReadOnlyList<string> roots) =>
+        string.Join("\u001F", roots.OrderBy(r => r, StringComparer.OrdinalIgnoreCase));
+
     private IReadOnlyList<string> ComputeRoots()
     {
         var roots = new List<string>();
         roots.AddRange(PathHelper.DefaultSearchDirectories());
         roots.AddRange(_settings.Current.AdditionalSearchDirectories);
         return roots.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private sealed class FileIndexStamp
+    {
+        public DateTime Utc { get; set; }
+
+        public string RootsHash { get; set; } = string.Empty;
     }
 }
