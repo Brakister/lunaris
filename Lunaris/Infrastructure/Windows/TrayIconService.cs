@@ -112,7 +112,9 @@ public sealed class TrayIconService : IDisposable, INotificationService
         if (msg != NativeMethods.WM_TRAY)
             return false;
 
-        var mouseMessage = lParam.ToInt32();
+        // With NOTIFYICON_VERSION_4, LOWORD(lParam) carries the event and HIWORD(lParam)
+        // carries the icon id. Comparing the full lParam can miss the event completely.
+        var mouseMessage = unchecked((int)((uint)lParam.ToInt64() & 0xFFFF));
         switch (mouseMessage)
         {
             case NativeMethods.WM_LBUTTONUP:
@@ -149,7 +151,11 @@ public sealed class TrayIconService : IDisposable, INotificationService
         NativeMethods.AppendMenu(menu, NativeMethods.MF_SEPARATOR, 0, null);
         NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuExit, "Sair");
 
-        NativeMethods.GetCursorPos(out var point);
+        // For NOTIFYICON_VERSION_4, the shell provides the anchor point in wParam for
+        // keyboard-triggered context menu events. Fall back to the cursor otherwise.
+        var point = new NativeMethods.POINT();
+        if (NativeMethods.GetCursorPos(out var cursor))
+            point = cursor;
 
         // The menu must be dismissed by a foreground window to behave properly.
         NativeMethods.SetForegroundWindow(handle);

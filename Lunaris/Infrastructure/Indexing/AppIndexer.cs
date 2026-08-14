@@ -5,10 +5,11 @@ using Microsoft.Win32;
 
 namespace Lunaris.Infrastructure.Indexing;
 
-/// <summary>Discovers installed applications from Start Menu, App Paths and PATH.</summary>
+/// <summary>Discovers installed applications from the Start Menu, registry, App Paths, PATH and Windows tools.</summary>
 public static class AppIndexer
 {
     private const string AppPathsKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
+    private const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
     private static readonly (string Exe, string Name, string Alias)[] SystemTools =
     {
@@ -38,6 +39,7 @@ public static class AppIndexer
         try
         {
             DiscoverStartMenu(apps, cancellationToken);
+            DiscoverInstalledApplications(apps, cancellationToken);
             DiscoverAppPaths(apps, cancellationToken);
             DiscoverPathExecutables(apps, cancellationToken);
             DiscoverSystemTools(apps, cancellationToken);
@@ -134,6 +136,66 @@ public static class AppIndexer
         }
     }
 
+    private static void DiscoverInstalledApplications(IDictionary<string, IndexedApplication> apps, CancellationToken cancellationToken)
+    {
+        foreach (var hive in new[] { RegistryHive.LocalMachine, RegistryHive.CurrentUser })
+        {
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                try
+                {
+                    using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                    using var key = baseKey.OpenSubKey(UninstallKey);
+                    if (key is null)
+                        continue;
+
+                    foreach (var subKeyName in key.GetSubKeyNames())
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                            return;
+
+                        using var subKey = key.OpenSubKey(subKeyName);
+                        if (subKey is null)
+                            continue;
+
+                        var displayName = GetStringValue(subKey, "DisplayName");
+                        if (string.IsNullOrWhiteSpace(displayName))
+                            continue;
+
+                        var path = ResolveExecutablePath(subKey);
+                        if (string.IsNullOrWhiteSpace(path))
+                            continue;
+
+                        var installLocation = GetStringValue(subKey, "InstallLocation");
+                        var displayIcon = GetStringValue(subKey, "DisplayIcon");
+                        var publisher = GetStringValue(subKey, "Publisher");
+
+                        apps.TryAdd(KeyFor(path), new IndexedApplication
+                        {
+                            Id = KeyFor(path),
+                            Name = displayName,
+                            Path = path,
+                            Category = "Aplicativo",
+                            Icon = Lunaris.Core.Utilities.GlyphCatalog.App,
+                            SearchText = string.Join(' ', new[]
+                            {
+                                displayName,
+                                publisher,
+                                Path.GetFileNameWithoutExtension(path),
+                                Path.GetFileNameWithoutExtension(installLocation ?? string.Empty),
+                                Path.GetFileNameWithoutExtension(displayIcon ?? string.Empty),
+                            }.Where(s => !string.IsNullOrWhiteSpace(s))),
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Installed application discovery failed for {Hive} {View}", hive, view);
+                }
+            }
+        }
+    }
+
     private static void DiscoverPathExecutables(IDictionary<string, IndexedApplication> apps, CancellationToken cancellationToken)
     {
         var pathVariable = Environment.GetEnvironmentVariable("PATH");
@@ -199,6 +261,97 @@ public static class AppIndexer
             });
         }
     }
+
+    private static string? ResolveExecutablePath(RegistryKey subKey)
+    {
+        var displayIcon = GetStringValue(subKey, "DisplayIcon");
+        var path = TryParseExecutablePath(displayIcon);
+        if (!string.IsNullOrWhiteSpace(path))
+            return path;
+
+        var installLocation = GetStringValue(subKey, "InstallLocation");
+        if (!string.IsNullOrWhiteSpace(installLocation) && Directory.Exists(installLocation))
+        {
+            var locationName = Path.GetFileName(Path.TrimEndingDirectorySeparator(installLocation));
+            var candidateFromFolder = FindBestExecutable(installLocation, locationName);
+            if (!string.IsNullOrWhiteSpace(candidateFromFolder))
+                return candidateFromFolder;
+        }
+
+        var uninstallString = GetStringValue(subKey, "QuietUninstallString");
+        path = TryParseExecutablePath(uninstallString);
+        if (!string.IsNullOrWhiteSpace(path))
+            return path;
+
+        uninstallString = GetStringValue(subKey, "UninstallString");
+        return TryParseExecutablePath(uninstallString);
+    }
+
+    private static string? FindBestExecutable(string installLocation, string? preferredStem)
+    {
+        try
+        {
+            var executables = Directory.EnumerateFiles(installLocation, "*.exe", SearchOption.TopDirectoryOnly)
+                .Where(File.Exists)
+                .ToList();
+
+            if (executables.Count == 0)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(preferredStem))
+            {
+                var match = executables.FirstOrDefault(file =>
+                    string.Equals(Path.GetFileNameWithoutExtension(file), preferredStem, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(match))
+                    return match;
+            }
+
+            return executables
+                .OrderByDescending(file => Path.GetFileNameWithoutExtension(file).Length)
+                .FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? TryParseExecutablePath(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+            return null;
+
+        var value = rawValue.Trim();
+        if (value.StartsWith('"'))
+        {
+            var endQuote = value.IndexOf('"', 1);
+            if (endQuote > 1)
+            {
+                var candidate = value[1..endQuote];
+                return File.Exists(candidate) ? candidate : null;
+            }
+        }
+
+        var comma = value.IndexOf(',');
+        if (comma > 0)
+            value = value[..comma];
+
+        var tokens = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0)
+            return null;
+
+        for (var i = tokens.Length; i > 0; i--)
+        {
+            var candidate = string.Join(' ', tokens.Take(i));
+            if (File.Exists(candidate))
+                return candidate;
+        }
+
+        return File.Exists(value) ? value : null;
+    }
+
+    private static string? GetStringValue(RegistryKey key, string valueName) =>
+        key.GetValue(valueName) as string;
 
     private static List<string> EnumerateSafe(string dir, string pattern, CancellationToken cancellationToken)
     {
