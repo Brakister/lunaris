@@ -68,6 +68,7 @@
                          ItemsSource="{Binding Results}"
                          SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
                          ItemTemplate="{StaticResource SearchResultTemplate}"
+                         MouseLeftButtonUp="OnResultsListMouseLeftButtonUp"
                          MaxHeight="436"
                          FontSize="{Binding FontSize}"/>
             </Grid>

@@ -85,4 +85,26 @@ public class FuzzyMatcherTests
         Assert.Equal("configuracoes", StringNormalizer.Normalize("Configurações"));
         Assert.Equal("cafe", StringNormalizer.Normalize("café"));
     }
+
+    [Fact]
+    public void StringNormalizer_is_thread_safe()
+    {
+        var inputs = new[] { "Configuração", "São Paulo", "ação", "canção", "maçã", "coração" };
+        var failures = 0;
+
+        Parallel.For(0, 1000, i =>
+        {
+            try
+            {
+                var s = inputs[i % inputs.Length];
+                Assert.NotEmpty(StringNormalizer.Normalize(s));
+            }
+            catch
+            {
+                Interlocked.Increment(ref failures);
+            }
+        });
+
+        Assert.Equal(0, failures);
+    }
 }

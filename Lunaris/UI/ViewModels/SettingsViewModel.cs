@@ -24,6 +24,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _showInTray;
     [ObservableProperty] private bool _openOnActiveMonitor;
     [ObservableProperty] private bool _closeOnExecute;
+    [ObservableProperty] private bool _autoUpdate;
 
     // Hotkey
     [ObservableProperty] private string _hotkeyModifiers = "Ctrl+Alt";
@@ -82,6 +83,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         ShowInTray = s.ShowInTray;
         OpenOnActiveMonitor = s.OpenOnActiveMonitor;
         CloseOnExecute = s.CloseOnExecute;
+        AutoUpdate = s.AutoUpdate;
         HotkeyModifiers = s.HotkeyModifiers;
         HotkeyKey = s.HotkeyKey;
         ThemeName = s.Theme;
@@ -124,6 +126,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnOpenOnActiveMonitorChanged(bool value) => Persist(x => x.OpenOnActiveMonitor = value);
 
     partial void OnCloseOnExecuteChanged(bool value) => Persist(x => x.CloseOnExecute = value);
+
+    partial void OnAutoUpdateChanged(bool value) => Persist(x => x.AutoUpdate = value);
 
     partial void OnHotkeyModifiersChanged(string value)
     {

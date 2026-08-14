@@ -6,8 +6,6 @@ namespace Lunaris.Core.Utilities;
 /// <summary>Normalizes text for accent-insensitive, case-insensitive matching.</summary>
 public static class StringNormalizer
 {
-    private static readonly StringBuilder Pool = new();
-
     public static string Normalize(string? value)
     {
         if (string.IsNullOrEmpty(value))
@@ -20,15 +18,14 @@ public static class StringNormalizer
     public static string RemoveDiacritics(string value)
     {
         var normalized = value.Normalize(NormalizationForm.FormD);
-        Pool.Clear();
+        var builder = new StringBuilder(normalized.Length);
 
         foreach (var c in normalized)
         {
-            var category = CharUnicodeInfo.GetUnicodeCategory(c);
-            if (category != UnicodeCategory.NonSpacingMark)
-                Pool.Append(c);
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                builder.Append(c);
         }
 
-        return Pool.ToString().Normalize(NormalizationForm.FormC);
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 }

@@ -3,6 +3,7 @@ using Lunaris.Core.Services;
 using Lunaris.Infrastructure.Database;
 using Lunaris.Infrastructure.Indexing;
 using Lunaris.Infrastructure.Logging;
+using Lunaris.Infrastructure.Update;
 using Lunaris.Infrastructure.Windows;
 using Lunaris.Search.ApplicationProvider;
 using Lunaris.Search.CalculatorProvider;
@@ -85,6 +86,7 @@ public static class Program
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<IClipboardMonitor, ClipboardMonitor>();
         services.AddSingleton<IClipboardHistoryService, ClipboardHistoryService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
 
         // ---- Windows integration ----
         services.AddSingleton<HotkeyService>();
@@ -104,6 +106,7 @@ public static class Program
                     index.IsPaused = !index.IsPaused;
                 },
                 About = () => new AboutWindow().ShowDialog(),
+                CheckUpdates = () => _ = App.CheckForUpdatesAsync(notifyWhenUpToDate: true),
                 Exit = App.ShutdownApp,
             };
             return actions;

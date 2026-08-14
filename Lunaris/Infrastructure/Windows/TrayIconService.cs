@@ -19,6 +19,8 @@ public sealed class TrayMenuActions
 
     public required Action About { get; init; }
 
+    public required Action CheckUpdates { get; init; }
+
     public required Action Exit { get; init; }
 }
 
@@ -34,7 +36,8 @@ public sealed class TrayIconService : IDisposable, INotificationService
     private const uint MenuReindex = 3;
     private const uint MenuPause = 4;
     private const uint MenuAbout = 5;
-    private const uint MenuExit = 6;
+    private const uint MenuCheckUpdates = 6;
+    private const uint MenuExit = 7;
 
     private readonly HiddenMessageWindow _messageWindow;
     private readonly TrayMenuActions _actions;
@@ -137,6 +140,7 @@ public sealed class TrayIconService : IDisposable, INotificationService
         NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuReindex, "Reindexar");
         NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuPause, _actions.PauseLabel());
         NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuAbout, "Sobre");
+        NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuCheckUpdates, "Verificar atualizações");
         NativeMethods.AppendMenu(menu, NativeMethods.MF_SEPARATOR, 0, null);
         NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, MenuExit, "Sair");
 
@@ -159,6 +163,7 @@ public sealed class TrayIconService : IDisposable, INotificationService
             case MenuReindex: _actions.Reindex(); break;
             case MenuPause: _actions.TogglePause(); break;
             case MenuAbout: _actions.About(); break;
+            case MenuCheckUpdates: _actions.CheckUpdates(); break;
             case MenuExit: _actions.Exit(); break;
         }
     }

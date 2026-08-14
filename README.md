@@ -143,4 +143,26 @@ installer/Lunaris.iss        Inno Setup script
 
 - Screenshot capture, system monitor, developer tools provider
 - Currency conversion (online provider, later)
-- Plugin system and auto-update
+- Plugin system
+
+## Versionamento
+
+> **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
+> Nunca commite nem crie Release com a versão antiga.
+
+- Versão atual: **1.2.0**
+
+Onde alterar a versão (todos juntos):
+- `Lunaris/Lunaris.csproj` → `<Version>`
+- `installer/Lunaris.iss` → `#define MyAppVersion`
+- `Lunaris/UI/Views/AboutWindow.xaml` → texto "Versão x.y.z"
+- `Lunaris/UI/Views/SettingsWindow.xaml` → rodapé "Lunaris Launcher x.y.z"
+- `Lunaris/app.manifest` → `assemblyIdentity version`
+- `Lunaris/App.xaml.cs` e `Lunaris/Infrastructure/Update/UpdateService.cs` → fallback "x.y.z"
+
+Depois de alterar a versão: `dotnet build` + `dotnet test`, republish com `scripts/publish.ps1`
+(regenera o `artifacts/Lunaris-Setup.exe`) e `git commit`/`push`.
+
+Para o auto-update funcionar: crie uma **Release** no GitHub com a tag `v<versão>` e anexe
+o `artifacts/Lunaris-Setup.exe` como asset. O app detecta versões novas automaticamente
+ou pelo menu do tray → "Verificar atualizações".

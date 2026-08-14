@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Input;
 using Lunaris.Core.Interfaces;
@@ -39,7 +40,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.0.0");
+        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.2.0");
 
         try
         {
@@ -111,6 +112,10 @@ public partial class App : Application
             SingleInstance.StartListenForShow(() =>
                 Dispatcher.Invoke(() => launcher.Show(), DispatcherPriority.Send));
 
+            // Auto-update check (non-blocking, after the app settles)
+            if (settings.Current.AutoUpdate)
+                _ = CheckForUpdatesAsync(delaySeconds: 5);
+
             Log.Info("Lunaris started");
         }
         catch (Exception ex)
@@ -155,6 +160,65 @@ public partial class App : Application
         launcher?.AllowClose();
 
         Current?.Shutdown();
+    }
+
+    /// <summary>
+    /// Checks GitHub releases and, if a newer version exists, asks the user whether to
+    /// download and install it. Used both at startup and from the tray menu.
+    /// </summary>
+    public static async Task CheckForUpdatesAsync(bool notifyWhenUpToDate = false, int delaySeconds = 0)
+    {
+        try
+        {
+            if (delaySeconds > 0)
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+
+            var update = Host.Services.GetRequiredService<IUpdateService>();
+            var info = await update.CheckAsync(CancellationToken.None);
+
+            if (info is null)
+            {
+                Log.Info("Update check: already up to date");
+                if (notifyWhenUpToDate)
+                    await NotifyAsync("Lunaris", "Você já está na versão mais recente.");
+                return;
+            }
+
+            var proceed = false;
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                proceed = MessageBox.Show(
+                    $"Nova versão {info.Version} disponível.\n\nDeseja baixar e instalar agora?",
+                    "Lunaris — Atualização",
+                    MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes;
+            });
+
+            if (!proceed)
+                return;
+
+            var updateDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Lunaris", "updates");
+
+            var installer = await update.DownloadAsync(info.DownloadUrl, updateDir, CancellationToken.None);
+
+            // Launch the installer, then exit so the new instance can take over.
+            if (update.LaunchInstaller(installer))
+                ShutdownApp();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Update flow failed");
+        }
+    }
+
+    private static async Task NotifyAsync(string title, string message)
+    {
+        var tray = Host.Services.GetService<TrayIconService>();
+        if (tray is null || Application.Current is null)
+            return;
+
+        await Application.Current.Dispatcher.InvokeAsync(() => tray.Show(title, message));
     }
 
     private static bool RegisterConfiguredHotkey(IHotkeyService hotkey, AppSettings settings)

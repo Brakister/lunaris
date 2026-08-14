@@ -1,7 +1,9 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Lunaris.Core.Models;
 using Lunaris.Infrastructure.Windows;
 using Lunaris.UI.ViewModels;
 
@@ -127,6 +129,21 @@ public partial class LauncherWindow : Window
                 e.Handled = true;
                 break;
         }
+    }
+
+    private void OnResultsListMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source)
+            return;
+
+        var item = ItemsControl.ContainerFromElement(ResultsList, source) as ListBoxItem;
+        if (item?.DataContext is not SearchResult result)
+            return;
+
+        if (!ReferenceEquals(_viewModel.SelectedResult, result))
+            _viewModel.SelectedResult = result;
+
+        _ = _viewModel.ExecuteSelectedAsync(false);
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

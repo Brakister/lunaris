@@ -70,6 +70,19 @@ public sealed class ActionRunner : IActionRunner
             return;
         }
 
+        if (result.Kind == SearchResultKind.Folder)
+        {
+            // Explorer opens directories reliably; Process.Start with a directory is flaky.
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{hint.TrimEnd('\\')}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+            return;
+        }
+
         var startInfo = new ProcessStartInfo
         {
             FileName = hint,

@@ -24,6 +24,7 @@
                     <CheckBox Content="Manter na System Tray" IsChecked="{Binding ShowInTray}" Margin="0,10,0,0"/>
                     <CheckBox Content="Abrir no monitor ativo" IsChecked="{Binding OpenOnActiveMonitor}" Margin="0,10,0,0"/>
                     <CheckBox Content="Fechar ao executar" IsChecked="{Binding CloseOnExecute}" Margin="0,10,0,0"/>
+                    <CheckBox Content="Verificar atualizações automaticamente" IsChecked="{Binding AutoUpdate}" Margin="0,10,0,0"/>
                 </StackPanel>
             </TabItem>
 
@@ -190,7 +191,7 @@
             </TabItem>
         </TabControl>
 
-        <TextBlock Grid.Row="1" Text="Lunaris Launcher 1.0.0 — local, rápido e privado"
+        <TextBlock Grid.Row="1" Text="Lunaris Launcher 1.2.0 — local, rápido e privado"
                    Margin="0,12,0,0" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
     </Grid>
 </Window>

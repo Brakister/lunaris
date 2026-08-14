@@ -15,6 +15,8 @@ public sealed class AppSettings
 
     public bool CloseOnExecute { get; set; } = true;
 
+    public bool AutoUpdate { get; set; } = true;
+
     public string HotkeyModifiers { get; set; } = "Ctrl+Alt";
 
     public string HotkeyKey { get; set; } = "Space";
