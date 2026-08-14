@@ -10,6 +10,27 @@ public static class AppIndexer
 {
     private const string AppPathsKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
 
+    private static readonly (string Exe, string Name)[] SystemTools =
+    {
+        ("cmd.exe", "Prompt de Comando"),
+        ("powershell.exe", "Windows PowerShell"),
+        ("pwsh.exe", "PowerShell 7"),
+        ("mstsc.exe", "Conexão de Área de Trabalho Remota"),
+        ("notepad.exe", "Bloco de Notas"),
+        ("taskmgr.exe", "Gerenciador de Tarefas"),
+        ("regedit.exe", "Editor do Registro"),
+        ("msconfig.exe", "Configuração do Sistema"),
+        ("control.exe", "Painel de Controle"),
+        ("winver.exe", "Sobre o Windows"),
+        ("osk.exe", "Teclado Virtual"),
+        ("snippingtool.exe", "Ferramenta de Captura"),
+        ("mspaint.exe", "Paint"),
+        ("charmap.exe", "Mapa de Caracteres"),
+        ("explorer.exe", "Explorador de Arquivos"),
+        ("perfmon.exe", "Monitor de Desempenho"),
+        ("resmon.exe", "Monitor de Recursos"),
+    };
+
     public static IReadOnlyList<IndexedApplication> Discover(CancellationToken cancellationToken)
     {
         var apps = new Dictionary<string, IndexedApplication>(StringComparer.OrdinalIgnoreCase);
@@ -19,6 +40,7 @@ public static class AppIndexer
             DiscoverStartMenu(apps, cancellationToken);
             DiscoverAppPaths(apps, cancellationToken);
             DiscoverPathExecutables(apps, cancellationToken);
+            DiscoverSystemTools(apps, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -143,6 +165,32 @@ public static class AppIndexer
                     Icon = Lunaris.Core.Utilities.GlyphCatalog.App,
                 });
             }
+        }
+    }
+
+    private static void DiscoverSystemTools(IDictionary<string, IndexedApplication> apps, CancellationToken cancellationToken)
+    {
+        var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        if (string.IsNullOrEmpty(systemDir) || !Directory.Exists(systemDir))
+            return;
+
+        foreach (var (exe, name) in SystemTools)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            var path = Path.Combine(systemDir, exe);
+            if (!File.Exists(path))
+                continue;
+
+            apps.TryAdd(KeyFor(path), new IndexedApplication
+            {
+                Id = KeyFor(path),
+                Name = name,
+                Path = path,
+                Category = "Sistema",
+                Icon = Lunaris.Core.Utilities.GlyphCatalog.App,
+            });
         }
     }
 

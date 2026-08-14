@@ -126,7 +126,7 @@ public sealed class UpdateService : IUpdateService
     private static string CurrentVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "1.3.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "1.4.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 
     private static string? ParseVersion(string? tag)

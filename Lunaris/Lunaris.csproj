@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -11,7 +11,7 @@
     <StartupObject>Lunaris.Program</StartupObject>
     <ApplicationIcon>Assets\Lunaris.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
     <Product>Lunaris Launcher</Product>
     <Authors>Lunaris</Authors>
     <Description>Lunaris - extremely fast Windows application launcher</Description>

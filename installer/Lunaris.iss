@@ -3,7 +3,7 @@
 ; Expects the publish output in ..\artifacts\publish (see scripts\publish.ps1)
 
 #define MyAppName "Lunaris"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "Lunaris"
 #define MyAppExeName "Lunaris.exe"
 
