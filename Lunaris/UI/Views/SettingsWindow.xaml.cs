@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using Lunaris.UI.ViewModels;
@@ -22,6 +23,20 @@ public partial class SettingsWindow : Window
             Show();
         Activate();
         Focus();
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        // The window is a singleton: instead of destroying it (which makes Show()
+        // throw on the next tray click), hide it and let the app shutdown path close it.
+        if (!App.IsShuttingDown)
+        {
+            e.Cancel = true;
+            Hide();
+            return;
+        }
+
+        base.OnClosing(e);
     }
 
     private void OnKeyCaptureKeyDown(object sender, KeyEventArgs e)
