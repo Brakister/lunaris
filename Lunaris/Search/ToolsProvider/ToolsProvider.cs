@@ -59,6 +59,11 @@ public sealed class ToolsProvider : ISearchProvider
             return results;
         }
 
+        // Time/date: "hora", "data", "agora", "time", "date", "hoje"
+        var clockResult = BuildClockResults(trimmed);
+        if (clockResult is not null)
+            return new[] { clockResult };
+
         // JSON: starts with { or [
         if (trimmed.StartsWith('{') || trimmed.StartsWith('['))
         {
@@ -67,6 +72,36 @@ public sealed class ToolsProvider : ISearchProvider
         }
 
         return results;
+    }
+
+    private SearchResult? BuildClockResults(string query)
+    {
+        var now = DateTime.Now;
+        string? payload = query.ToLowerInvariant() switch
+        {
+            "hora" or "time" or "agora" or "que horas sao" => now.ToString("HH:mm:ss"),
+            "data" or "date" or "hoje" or "dia" => now.ToString("dd/MM/yyyy"),
+            "agora completo" or "datetime" => now.ToString("dd/MM/yyyy HH:mm:ss"),
+            _ => null,
+        };
+
+        if (payload is null)
+            return null;
+
+        var result = new SearchResult
+        {
+            Id = "clock:" + query.ToLowerInvariant(),
+            Title = payload,
+            Subtitle = "Copiar data/hora",
+            Icon = GlyphCatalog.Clock,
+            Category = "Ferramenta",
+            Kind = SearchResultKind.TextAction,
+            Score = 0.9,
+            ExecuteHint = payload,
+            ProviderId = Id,
+        };
+        result.ExecuteAsync = () => _runner.ExecuteAsync(result, false);
+        return result;
     }
 
     private async Task<SearchResult> BuildHashResultAsync(string algo, string path, CancellationToken cancellationToken)

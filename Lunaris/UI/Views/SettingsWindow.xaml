@@ -191,7 +191,7 @@
             </TabItem>
         </TabControl>
 
-        <TextBlock Grid.Row="1" Text="Lunaris Launcher 1.4.2 — local, rápido e privado"
+        <TextBlock Grid.Row="1" Text="Lunaris Launcher 1.5.0 — local, rápido e privado"
                    Margin="0,12,0,0" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
     </Grid>
 </Window>

@@ -119,6 +119,12 @@ public partial class LauncherWindow : Window
                 e.Handled = true;
                 break;
 
+            case Key.D when (Keyboard.Modifiers & ModifierKeys.Alt) != 0:
+                // README documents ALT+D as the favorites shortcut; keep CTRL+P too.
+                _viewModel.ToggleFavoriteSelected();
+                e.Handled = true;
+                break;
+
             case Key.J when (Keyboard.Modifiers & ModifierKeys.Control) != 0:
                 _viewModel.MoveSelection(1);
                 e.Handled = true;

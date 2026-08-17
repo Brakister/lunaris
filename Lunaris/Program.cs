@@ -16,6 +16,7 @@ using Lunaris.Search.HistoryProvider;
 using Lunaris.Search.SystemProvider;
 using Lunaris.Search.ToolsProvider;
 using Lunaris.Search.UrlProvider;
+using Lunaris.Search.WebSearchProvider;
 using Lunaris.UI.ViewModels;
 using Lunaris.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -130,6 +131,9 @@ public static class Program
         services.AddSingleton<ToolsProvider>();
         services.AddSingleton<ConversionProvider>();
         services.AddSingleton<ClipboardProvider>();
+
+        services.AddSingleton<WebSearchProvider>();
+        services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<WebSearchProvider>());
 
         services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<ApplicationSearchProvider>());
         services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<FileSearchProvider>());

@@ -146,7 +146,7 @@ public sealed partial class LauncherViewModel : ObservableObject
         }
         else
         {
-            StatusText = $"{Results.Count} resultado(s) · ↑↓ navegar · ↵ executar · CTRL+P favoritar{warning}";
+            StatusText = $"{Results.Count} resultado(s) · ↑↓ navegar · ↵ executar · ALT+D/CTRL+P favoritar{warning}";
         }
     }
 

@@ -58,10 +58,11 @@ dotnet build Lunaris.slnx -c Release
   - Calculator – safe recursive-descent parser (`2+2`, `sqrt(144)`, `25%`, `200+10%`)
   - Custom commands and aliases (fully user-configurable)
   - URLs and bare domains (`example.com` opens in the browser)
+  - Web search with bangs (`g query`, `yt query`, `wiki query`, `so query`, `gh query`, `maps query`, ...)
   - `ms-settings:` pages and system tools (`shutdown`, `restart`, `lock`, etc.)
   - History and favorites
   - Unit conversions (length, mass, volume, data, speed, temperature)
-  - Tools: password generator, hash calculator, JSON formatter/validator
+  - Tools: password generator, hash calculator, JSON formatter/validator, current time/date (`hora`, `data`)
   - Clipboard history (optional, off by default)
 - **Ranking** – combines match quality with usage count, recency and favorites.
 - **History & favorites** – usage is stored locally; `ALT+D` favorites a result.
@@ -150,7 +151,7 @@ installer/Lunaris.iss        Inno Setup script
 > **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
 > Nunca commite nem crie Release com a versão antiga.
 
-- Versão atual: **1.4.2**
+- Versão atual: **1.5.0**
 
 Onde alterar a versão (todos juntos):
 - `Lunaris/Lunaris.csproj` → `<Version>`
