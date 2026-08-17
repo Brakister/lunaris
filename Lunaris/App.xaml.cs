@@ -41,7 +41,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.5.2");
+        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.5.3");
 
         RegisterGlobalExceptionHandlers();
 
@@ -52,6 +52,20 @@ public partial class App : Application
 
             var settings = Host.Services.GetRequiredService<ISettingsService>();
             settings.Load();
+
+            // Keep the startup setting in sync with what is actually registered.
+            // The installer may register the Run entry before the first launch, so
+            // adopt it; if the user asked to start with Windows but the entry is
+            // missing, re-register it (self-heal).
+            if (StartupManager.IsEnabled())
+            {
+                if (!settings.Current.StartWithWindows)
+                    settings.Update(x => x.StartWithWindows = true);
+            }
+            else if (settings.Current.StartWithWindows)
+            {
+                StartupManager.Enable();
+            }
 
             // Load cached state
             Host.Services.GetRequiredService<IFavoritesService>().Load();

@@ -11,7 +11,7 @@
     <StartupObject>Lunaris.Program</StartupObject>
     <ApplicationIcon>Assets\Lunaris.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.5.2</Version>
+    <Version>1.5.3</Version>
     <Product>Lunaris Launcher</Product>
     <Authors>Lunaris</Authors>
     <Description>Lunaris - extremely fast Windows application launcher</Description>

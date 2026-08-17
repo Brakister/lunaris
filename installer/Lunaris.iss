@@ -3,7 +3,7 @@
 ; Expects the publish output in ..\artifacts\publish (see scripts\publish.ps1)
 
 #define MyAppName "Lunaris"
-#define MyAppVersion "1.5.2"
+#define MyAppVersion "1.5.3"
 #define MyAppPublisher "Lunaris"
 #define MyAppExeName "Lunaris.exe"
 
@@ -33,6 +33,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "startup"; Description: "Iniciar o Lunaris junto com o Windows"; GroupDescription: "Inicialização:"; Flags: checkedonce
+
+[Registry]
+; Register startup in the HKCU Run key plus the Task Manager "enabled" state,
+; matching what Lunaris' own settings do (see StartupManager).
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Lunaris"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startup
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"; ValueType: binary; ValueName: "Lunaris"; ValueData: "02 00 00 00 00 00 00 00 00 00 00 00"; Flags: uninsdeletevalue; Tasks: startup
 
 [Files]
 Source: "..\artifacts\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

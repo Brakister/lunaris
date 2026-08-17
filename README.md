@@ -18,7 +18,8 @@ Built entirely in C# / .NET 8 (WPF, MVVM, SQLite, Serilog). No Electron, no WinF
 5. Uninstall via Windows **Settings → Apps** (program data in
    `%LocalAppData%\Lunaris` is removed too).
 
-> Tip: enable "Iniciar com o Windows" in the settings if you want Lunaris
+> Tip: enable "Iniciar com o Windows" in the settings (or check the
+> "Iniciar o Lunaris junto com o Windows" box during install) to have Lunaris
 > available right after boot.
 
 ### Option 2 — Run from source
@@ -117,7 +118,8 @@ If [Inno Setup](https://jrsoftware.org/isinfo.php) 6 is installed, run:
 iscc installer/Lunaris.iss
 ```
 
-The installer registers Lunaris to start with Windows on first launch.
+The installer asks whether Lunaris should start with Windows (checkbox checked
+by default). The same option is available in Settings → Geral.
 
 ## Data & logs
 
@@ -151,7 +153,7 @@ installer/Lunaris.iss        Inno Setup script
 > **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
 > Nunca commite nem crie Release com a versão antiga.
 
-- Versão atual: **1.5.2**
+- Versão atual: **1.5.3**
 
 Onde alterar a versão (todos juntos):
 - `Lunaris/Lunaris.csproj` → `<Version>`
