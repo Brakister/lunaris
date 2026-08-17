@@ -17,6 +17,7 @@ public sealed class HistoryService : IHistoryService
     private readonly HistoryRepository _repository;
     private readonly ISettingsService _settings;
     private readonly IActionRunner _runner;
+    private readonly object _statsGate = new();
     private readonly Dictionary<string, UsageStats> _statsCache = new();
 
     public HistoryService(HistoryRepository repository, ISettingsService settings, IActionRunner runner)
@@ -38,14 +39,17 @@ public sealed class HistoryService : IHistoryService
         {
             _repository.Record(query, result);
 
-            if (_statsCache.TryGetValue(result.Id, out var stats))
+            lock (_statsGate)
             {
-                stats.ExecutionCount++;
-                stats.LastExecuted = DateTime.Now;
-            }
-            else
-            {
-                _statsCache[result.Id] = _repository.GetStats(result.Id) ?? new UsageStats { ResultId = result.Id };
+                if (_statsCache.TryGetValue(result.Id, out var stats))
+                {
+                    stats.ExecutionCount++;
+                    stats.LastExecuted = DateTime.Now;
+                }
+                else
+                {
+                    _statsCache[result.Id] = _repository.GetStats(result.Id) ?? new UsageStats { ResultId = result.Id };
+                }
             }
         }
         catch (Exception ex)
@@ -56,13 +60,16 @@ public sealed class HistoryService : IHistoryService
 
     public UsageStats? GetStats(string resultId)
     {
-        if (_statsCache.TryGetValue(resultId, out var cached))
-            return cached;
+        lock (_statsGate)
+        {
+            if (_statsCache.TryGetValue(resultId, out var cached))
+                return cached;
 
-        var stats = _repository.GetStats(resultId);
-        if (stats is not null)
-            _statsCache[resultId] = stats;
-        return stats;
+            var stats = _repository.GetStats(resultId);
+            if (stats is not null)
+                _statsCache[resultId] = stats;
+            return stats;
+        }
     }
 
     public IReadOnlyList<SearchResult> GetRecent(int limit)
@@ -99,7 +106,8 @@ public sealed class HistoryService : IHistoryService
 
     public void Clear()
     {
-        _statsCache.Clear();
+        lock (_statsGate)
+            _statsCache.Clear();
         try
         {
             _repository.Clear();

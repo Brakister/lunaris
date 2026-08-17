@@ -56,104 +56,96 @@ public sealed class FileIndexer
 
     private async Task WalkDirectoryAsync(string directory, List<(string, string, string, long, DateTime, bool)> batch, CancellationToken cancellationToken)
     {
-        var entries = await Task.Run(() =>
+        await Task.Run(() =>
         {
             Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-            var list = new List<FileSystemEntry>();
 
-            foreach (var dir in EnumerateDirsSafe(directory, cancellationToken))
+            foreach (var entry in EnumerateEntriesSafe(directory, cancellationToken))
             {
-                list.Add(new FileSystemEntry(dir, true));
-                foreach (var file in EnumerateFilesSafe(dir, cancellationToken))
-                    list.Add(new FileSystemEntry(file, false));
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                AddEntry(batch, entry);
+            }
+        }, cancellationToken);
+    }
+
+    private void AddEntry(List<(string, string, string, long, DateTime, bool)> batch, FileSystemEntry entry)
+    {
+        try
+        {
+            long size = 0;
+            FileSystemInfo info;
+            if (entry.IsFolder)
+            {
+                info = new DirectoryInfo(entry.Path);
+            }
+            else
+            {
+                var fileInfo = new FileInfo(entry.Path);
+                size = fileInfo.Length;
+                info = fileInfo;
             }
 
-            return list;
-        }, cancellationToken);
+            batch.Add((entry.Path,
+                info.Name,
+                Path.GetDirectoryName(entry.Path) ?? string.Empty,
+                size,
+                info.LastWriteTime,
+                entry.IsFolder));
 
-        foreach (var entry in entries)
+            if (batch.Count >= 500)
+                Flush(batch);
+        }
+        catch
+        {
+            // entry vanished mid-scan
+        }
+    }
+
+    /// <summary>
+    /// Streams directories and files in a single pass (recurse-once), so memory stays
+    /// bounded regardless of tree size and the disk is not scanned twice.
+    /// </summary>
+    private static IEnumerable<FileSystemEntry> EnumerateEntriesSafe(string root, CancellationToken cancellationToken)
+    {
+        var stack = new Stack<string>();
+        stack.Push(root);
+
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = false,
+            AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden,
+        };
+
+        while (stack.Count > 0)
         {
             if (cancellationToken.IsCancellationRequested)
-                return;
+                yield break;
 
+            var dir = stack.Pop();
+            List<string> subdirs;
+            List<string> files;
             try
             {
-                var size = 0L;
-                FileSystemInfo info;
-                if (entry.IsFolder)
-                {
-                    info = new DirectoryInfo(entry.Path);
-                }
-                else
-                {
-                    var fileInfo = new FileInfo(entry.Path);
-                    size = fileInfo.Length;
-                    info = fileInfo;
-                }
-
-                batch.Add((entry.Path,
-                    info.Name,
-                    Path.GetDirectoryName(entry.Path) ?? string.Empty,
-                    size,
-                    info.LastWriteTime,
-                    entry.IsFolder));
-
-                if (batch.Count >= 500)
-                    Flush(batch);
+                subdirs = Directory.EnumerateDirectories(dir, "*", options).ToList();
+                files = Directory.EnumerateFiles(dir, "*", options).ToList();
             }
             catch
             {
-                // entry vanished mid-scan
+                continue; // ignore protected paths
             }
-        }
-    }
 
-    private static List<string> EnumerateDirsSafe(string dir, CancellationToken cancellationToken)
-    {
-        var list = new List<string>();
-        try
-        {
-            foreach (var d in Directory.EnumerateDirectories(dir, "*", new EnumerationOptions
+            foreach (var sub in subdirs)
             {
-                IgnoreInaccessible = true,
-                RecurseSubdirectories = true,
-                AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden,
-            }))
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-                list.Add(d);
+                yield return new FileSystemEntry(sub, true);
+                stack.Push(sub);
             }
-        }
-        catch
-        {
-            // ignore protected paths
-        }
-        return list;
-    }
 
-    private static List<string> EnumerateFilesSafe(string dir, CancellationToken cancellationToken)
-    {
-        var list = new List<string>();
-        try
-        {
-            foreach (var f in Directory.EnumerateFiles(dir, "*", new EnumerationOptions
-            {
-                IgnoreInaccessible = true,
-                RecurseSubdirectories = false,
-                AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden,
-            }))
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-                list.Add(f);
-            }
+            foreach (var file in files)
+                yield return new FileSystemEntry(file, false);
         }
-        catch
-        {
-            // ignore protected paths
-        }
-        return list;
     }
 
     private void Flush(List<(string, string, string, long, DateTime, bool)> batch)

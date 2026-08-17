@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Runtime.ExceptionServices;
 using Lunaris.Core.Interfaces;
 using Lunaris.Core.Models;
 using Lunaris.Core.Services;
@@ -40,7 +41,9 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.5.0");
+        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.5.1");
+
+        RegisterGlobalExceptionHandlers();
 
         try
         {
@@ -125,6 +128,33 @@ public partial class App : Application
                 MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(-1);
         }
+    }
+
+    /// <summary>
+    /// Catches exceptions that would otherwise terminate the process with no log entry.
+    /// UI-thread errors are logged and swallowed so the launcher keeps running; background
+    /// and unobserved task exceptions are logged (they cannot be recovered).
+    /// </summary>
+    private void RegisterGlobalExceptionHandlers()
+    {
+        DispatcherUnhandledException += (_, args) =>
+        {
+            Log.Error(args.Exception, "Unhandled exception on the UI thread");
+            args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            Log.Error(ex ?? new Exception("Unknown unhandled exception"),
+                "Unhandled exception on a background thread (terminating={IsTerminating})", args.IsTerminating);
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Log.Error(args.Exception, "Unobserved task exception");
+            args.SetObserved();
+        };
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -78,7 +78,6 @@ public sealed partial class LauncherViewModel : ObservableObject
     private CancellationToken CreateToken()
     {
         _cts.Cancel();
-        _cts.Dispose();
         _cts = new CancellationTokenSource();
         return _cts.Token;
     }

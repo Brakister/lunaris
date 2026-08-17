@@ -48,6 +48,11 @@ public sealed class FileSearchProvider : ISearchProvider
         try
         {
             var (nameTokens, extension) = ParseQuery(query);
+            // A single-character name token would trigger a full-table LIKE scan with
+            // almost no signal; skip it (extension-only queries like ".pdf" are allowed).
+            if (nameTokens.Sum(t => t.Length) < 2 && extension is null)
+                return Task.FromResult<IEnumerable<SearchResult>>(Array.Empty<SearchResult>());
+
             var namePattern = string.Join("%", nameTokens);
             var results = _repository.Search(namePattern, extension, null, 50);
             return Task.FromResult<IEnumerable<SearchResult>>(AttachActions(results));

@@ -10,6 +10,7 @@ public sealed class SearchEngine : ISearchEngine
     private readonly ISettingsService _settings;
     private readonly IHistoryService _history;
     private readonly IFavoritesService _favorites;
+    private readonly object _failedGate = new();
     private readonly List<string> _failedProviders = new();
 
     public SearchEngine(
@@ -24,11 +25,19 @@ public sealed class SearchEngine : ISearchEngine
         _favorites = favorites;
     }
 
-    public IReadOnlyList<string> FailedProviders => _failedProviders;
+    public IReadOnlyList<string> FailedProviders
+    {
+        get
+        {
+            lock (_failedGate)
+                return _failedProviders.ToArray();
+        }
+    }
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string query, CancellationToken cancellationToken)
     {
-        _failedProviders.Clear();
+        lock (_failedGate)
+            _failedProviders.Clear();
         var results = new List<SearchResult>();
         var tasks = _providers.Select(p => RunProviderAsync(p, query, cancellationToken)).ToArray();
 
@@ -51,7 +60,8 @@ public sealed class SearchEngine : ISearchEngine
         }
         catch (Exception ex)
         {
-            _failedProviders.Add(provider.Name);
+            lock (_failedGate)
+                _failedProviders.Add(provider.Name);
             Log.Error(ex, "Search provider {Provider} failed", provider.Name);
             return Array.Empty<SearchResult>();
         }
