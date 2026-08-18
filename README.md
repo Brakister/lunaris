@@ -60,6 +60,7 @@ dotnet build Lunaris.slnx -c Release
   - Custom commands and aliases (fully user-configurable)
   - URLs and bare domains (`example.com` opens in the browser)
   - Web search with bangs (`g query`, `yt query`, `wiki query`, `so query`, `gh query`, `maps query`, ...)
+  - Downloads (`d url` baixa qualquer arquivo, `dv url` baixa vídeo em MP4, `d3 url` baixa áudio em MP3 — com yt-dlp/ffmpeg auto-instalados)
   - `ms-settings:` pages and system tools (`shutdown`, `restart`, `lock`, etc.)
   - History and favorites
   - Unit conversions (length, mass, volume, data, speed, temperature)
@@ -153,7 +154,7 @@ installer/Lunaris.iss        Inno Setup script
 > **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
 > Nunca commite nem crie Release com a versão antiga.
 
-- Versão atual: **1.5.3**
+- Versão atual: **1.6.0**
 
 Onde alterar a versão (todos juntos):
 - `Lunaris/Lunaris.csproj` → `<Version>`

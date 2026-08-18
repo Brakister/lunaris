@@ -41,7 +41,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.5.3");
+        Log.Info("Lunaris starting (v{Version})", typeof(App).Assembly.GetName().Version?.ToString() ?? "1.6.0");
 
         RegisterGlobalExceptionHandlers();
 

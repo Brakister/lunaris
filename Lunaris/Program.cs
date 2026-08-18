@@ -10,6 +10,7 @@ using Lunaris.Search.CalculatorProvider;
 using Lunaris.Search.ClipboardProvider;
 using Lunaris.Search.CommandProvider;
 using Lunaris.Search.ConversionProvider;
+using Lunaris.Search.DownloadProvider;
 using Lunaris.Search.FileProvider;
 using Lunaris.Search.FavoritesProvider;
 using Lunaris.Search.HistoryProvider;
@@ -88,6 +89,7 @@ public static class Program
         services.AddSingleton<IClipboardMonitor, ClipboardMonitor>();
         services.AddSingleton<IClipboardHistoryService, ClipboardHistoryService>();
         services.AddSingleton<IUpdateService, UpdateService>();
+        services.AddSingleton<IDownloadService, DownloadService>();
 
         // ---- Windows integration ----
         services.AddSingleton<HotkeyService>();
@@ -134,6 +136,9 @@ public static class Program
 
         services.AddSingleton<WebSearchProvider>();
         services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<WebSearchProvider>());
+
+        services.AddSingleton<DownloadProvider>();
+        services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<DownloadProvider>());
 
         services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<ApplicationSearchProvider>());
         services.AddSingleton<ISearchProvider>(sp => sp.GetRequiredService<FileSearchProvider>());
