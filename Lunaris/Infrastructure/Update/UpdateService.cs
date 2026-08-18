@@ -93,16 +93,33 @@ public sealed class UpdateService : IUpdateService
             fileName = "Lunaris-Setup.exe";
 
         var destinationPath = Path.Combine(destinationDirectory, fileName);
+        var tempPath = destinationPath + ".lunaris-dl";
 
-        using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-        await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
-        await using var target = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
-        await source.CopyToAsync(target, cancellationToken);
+            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var target = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.Read, 81920, useAsync: true))
+            {
+                await source.CopyToAsync(target, cancellationToken);
+                await target.FlushAsync(cancellationToken);
+            }
 
-        Log.Info("Update downloaded to {Path}", destinationPath);
-        return destinationPath;
+            if (File.Exists(destinationPath))
+                File.Delete(destinationPath);
+
+            File.Move(tempPath, destinationPath);
+
+            Log.Info("Update downloaded to {Path}", destinationPath);
+            return destinationPath;
+        }
+        catch
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+            throw;
+        }
     }
 
     public bool LaunchInstaller(string installerPath)
@@ -126,7 +143,7 @@ public sealed class UpdateService : IUpdateService
     private static string CurrentVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "1.6.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "1.7.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 
     private static string? ParseVersion(string? tag)

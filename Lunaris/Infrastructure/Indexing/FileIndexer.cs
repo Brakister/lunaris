@@ -130,7 +130,9 @@ public sealed class FileIndexer
             try
             {
                 subdirs = Directory.EnumerateDirectories(dir, "*", options).ToList();
-                files = Directory.EnumerateFiles(dir, "*", options).ToList();
+                files = Directory.EnumerateFiles(dir, "*", options)
+                    .Where(f => !f.EndsWith(".lunaris-dl", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
             catch
             {
