@@ -240,7 +240,7 @@ public sealed class DownloadService : IDownloadService
             }
             catch (Exception ex)
             {
-                Log.Warn(ex, "Failed to rename temp file {Temp} to {Final}", tempPath, finalPath);
+                Log.Warn("Failed to rename temp file {Temp} to {Final}: {Error}", tempPath, finalPath, ex.Message);
                 throw;
             }
         }
