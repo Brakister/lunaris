@@ -141,6 +141,11 @@ public sealed class FileIndexer
 
             foreach (var sub in subdirs)
             {
+                // Don't descend into heavy/system directories that only add noise
+                // (and bloat the SQLite index) when scanning whole drives.
+                if (IsSkippedDirectory(Path.GetFileName(Path.TrimEndingDirectorySeparator(sub))))
+                    continue;
+
                 yield return new FileSystemEntry(sub, true);
                 stack.Push(sub);
             }
@@ -148,6 +153,39 @@ public sealed class FileIndexer
             foreach (var file in files)
                 yield return new FileSystemEntry(file, false);
         }
+    }
+
+    /// <summary>Directories never indexed — machine-generated or uninteresting for a launcher.</summary>
+    private static bool IsSkippedDirectory(string name)
+    {
+        if (name.Length == 0)
+            return false;
+
+        return name.Equals("appdata", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("application data", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("local settings", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("windows", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("program files", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("program files (x86)", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("programdata", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("$recycle.bin", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("system volume information", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("recovery", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("perflogs", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("node_modules", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".git", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("__pycache__", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".venv", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("venv", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".cache", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".next", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".nuget", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".gradle", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("site-packages", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".pytest_cache", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".mypy_cache", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".idea", StringComparison.OrdinalIgnoreCase)
+            || name.Equals(".vscode", StringComparison.OrdinalIgnoreCase);
     }
 
     private void Flush(List<(string, string, string, long, DateTime, bool)> batch)

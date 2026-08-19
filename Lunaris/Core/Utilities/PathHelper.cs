@@ -5,7 +5,12 @@ namespace Lunaris.Core.Utilities;
 
 public static class PathHelper
 {
-    /// <summary>Default directories searched by the file indexer.</summary>
+    /// <summary>
+    /// Default directories searched by the file indexer: the classic user folders plus
+    /// every fixed drive so folders anywhere on the PC are findable. Heavy system and
+    /// machine-generated directories (Windows, AppData, node_modules, ...) are skipped
+    /// by the indexer itself.
+    /// </summary>
     public static IReadOnlyList<string> DefaultSearchDirectories()
     {
         var list = new List<string>();
@@ -18,6 +23,12 @@ public static class PathHelper
         Add(KnownFolders.GetPath(KnownFolders.Pictures));
         Add(KnownFolders.GetPath(KnownFolders.Videos));
         Add(KnownFolders.GetPath(KnownFolders.Music));
+
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            if (drive.DriveType == DriveType.Fixed && drive.IsReady)
+                Add(drive.RootDirectory.FullName);
+        }
 
         return list;
     }

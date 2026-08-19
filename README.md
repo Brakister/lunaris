@@ -154,7 +154,7 @@ installer/Lunaris.iss        Inno Setup script
 > **REGRA: SEMPRE que alterar algo (bug fix, feature, build, settings), incremente a versão.**
 > Nunca commite nem crie Release com a versão antiga.
 
-- Versão atual: **1.7.0**
+- Versão atual: **1.7.1**
 
 Onde alterar a versão (todos juntos):
 - `Lunaris/Lunaris.csproj` → `<Version>`

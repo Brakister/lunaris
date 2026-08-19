@@ -21,7 +21,10 @@ public sealed class DownloadService : IDownloadService
     private const string YtDlpUrl = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe";
     private const string FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
 
-    private const string VideoFormat = "-f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" --merge-output-format mp4";
+    // Downloads the best quality available regardless of codec, merges into MKV (any codec fits),
+    // then re-encodes to MP4 with ffmpeg as H.264 (Main) + AAC 128k + faststart — a combination
+    // accepted by virtually every player and site.
+    private const string VideoFormat = "-f \"bv*+ba/b\" --merge-output-format mkv --recode-video mp4 --postprocessor-args \"VideoConvertor:-c:v libx264 -profile:v main -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart\"";
     private const string AudioFormat = "-x --audio-format mp3 --audio-quality 0";
 
     private const string TempExtension = ".lunaris-dl";
